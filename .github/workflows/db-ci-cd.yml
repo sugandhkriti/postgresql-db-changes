@@ -1,0 +1,59 @@
+name: PostgreSQL DB CI/CD
+
+on:
+  push:
+    branches:
+      - dev
+      - sit
+      - uat
+      - main
+
+  workflow_dispatch:
+    inputs:
+      rollback_version:
+        description: "Rollback version (e.g. V001)"
+        required: false
+
+jobs:
+  db-deploy:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Deploy or Rollback
+        env:
+          PGPASSWORD: postgres
+        run: |
+          BRANCH=${GITHUB_REF_NAME}
+
+          if [[ -n "${{ github.event.inputs.rollback_version }}" ]]; then
+            VERSION=${{ github.event.inputs.rollback_version }}
+            echo "Manual rollback for $VERSION"
+            ./scripts/rollback.sh localhost app_dev postgres 
+          else
+            echo "Auto deploy for $BRANCH"
+            ./scripts/deploy.sh localhost app_dev postgres $VERSION
+          fi
