@@ -52,8 +52,8 @@ jobs:
           if [[ -n "${{ github.event.inputs.rollback_version }}" ]]; then
             VERSION=${{ github.event.inputs.rollback_version }}
             echo "Manual rollback for $VERSION"
-            ./scripts/rollback.sh postgres app_dev postgres $VERSION
+            ./scripts/rollback.sh localhost app_dev postgres 
           else
             echo "Auto deploy for $BRANCH"
-            ./scripts/deploy.sh postgres app_dev postgres
+            ./scripts/deploy.sh localhost app_dev postgres $VERSION
           fi
