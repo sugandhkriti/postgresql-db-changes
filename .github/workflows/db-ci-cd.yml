@@ -40,6 +40,9 @@ jobs:
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
       - name: Deploy or Rollback
         env:
           PGPASSWORD: postgres
@@ -49,8 +52,8 @@ jobs:
           if [[ -n "${{ github.event.inputs.rollback_version }}" ]]; then
             VERSION=${{ github.event.inputs.rollback_version }}
             echo "Manual rollback for $VERSION"
-            ./scripts/rollback.sh localhost app_dev postgres $VERSION
+            ./scripts/rollback.sh postgres app_dev postgres $VERSION
           else
             echo "Auto deploy for $BRANCH"
-            ./scripts/deploy.sh localhost app_dev postgres
+            ./scripts/deploy.sh postgres app_dev postgres
           fi
